@@ -35,12 +35,12 @@ barrier finishRound(4, [](){
     roundNo++;
 });
 
+//Questions
 struct Question{
     string q;
     char ans;
     vector<string> ch;
 };
-
 vector<Question> questions = { 
     {"Which of the following would a magnet most likely attract?", 'a', {"a) Metal", "b) Plastic", "c) Wood", "d) The wrong person"}},
     {"What is the most populated country in the world?", 'b', {"a) China", "b) India", "c) United States", "d) Russia"}},
@@ -54,46 +54,16 @@ vector<Question> questions = {
 };
 
 //PROTOTYPES
-char askQ();
-char lifeline();
-    //lifeline menu uses rng <---------------------- TODO
-void gameplay(int id, bool isAuto);
-void start(int numPlayers, bool isAuto);
+char askQ(int id);
+void gameplay(int id);
+void start();
 bool checkAns(int id, char ans); 
-    //check if true and cout if player is right<---------------------- TODO
 string checkHighest();
 
 
 int main()
 {
-    int ch, numPlayers;
-
-    while (true){
-    cout<<"MENU"<<endl;
-    cout<<"1. Automatic"<<endl; //OPTIONAL NALANG 
-    cout<<"2. Manual"<<endl;
-    cout<<"3. Exit"<<endl;
-
-    cout << "Enter choice: ";
-    cin>>ch;
-    
-        switch(ch){
-            case 2: //Manual
-                start(4, false);
-                return 0; //program exits after the winner is announced 
-            case 3:
-                cout << "Exiting..." << endl;
-                return 0;
-            default:
-                if (cin.fail()){
-                    cin.clear();
-                    cin.ignore(1000, '\n');
-                    cout << "Error. Input should be a number." << endl;
-                } else {
-                    cout << "Invalid choice. Please choose from 1-3 only." << endl;
-                }
-        }
-    }
+    start();
 }
 
 char askQ(int id){ 
@@ -104,96 +74,96 @@ char askQ(int id){
     bool lifeline = false;
     
     while (true) {
-    {
-        lock_guard<recursive_mutex> lock(printMtx);
-        cout << q.q << endl;
-        for (auto& choice : q.ch) cout << choice << endl;
-        cout << "[You have 30 seconds to answer]\n";
-        cout << "Player " << id << "'s choice (Press 0 to use lifeline): ";
-    }
-    
-    auto start = chrono::steady_clock::now(); //start timer
-    
-    cin >> answer; //answer will be marked wrong if entered after the time limit
-    
-    auto end = chrono::steady_clock::now();
-    auto timeElapsed = chrono::duration_cast<chrono::seconds>(end - start).count();
-    
-    if (timeElapsed > 30){
-        lock_guard<recursive_mutex> lock(printMtx);
-        cout << "\nInvalid answer. Time limit exceeded!\n";
-        return 'x'; //player's answer is automatically marked
-    }
-    
-    ch = answer[0];
-    if (ch == '0' && !lifeline)
         {
-        int choice;
-        {
-        lock_guard<recursive_mutex> lock(printMtx);
-        cout << "\n-----Lifeline-----\n";
-        cout << "1. Phone a friend" << endl;
-        cout << "2. 50/50" << endl;
-        cout << "3. Ask the Audience" << endl;
+            lock_guard<recursive_mutex> lock(printMtx);
+            cout <<"\n"<< q.q << endl;
+            for (auto& choice : q.ch) cout << choice << endl;
+            cout << "[You have 30 seconds to answer]\n";
+            cout << "Player " << id << "'s choice (Press 0 to use lifeline): ";
         }
         
-        cout << "What lifeline would you like to use? ";
-        cin >> choice;
-          
-        //randomize lifeline answers
-        random_device randomA;
-        mt19937 rng(randomA());
-        uniform_int_distribution<int> dist(0, 3);
-        int lifelineAns;
+        auto start = chrono::steady_clock::now(); //start timer
         
-        switch (choice)
-            {
-            case 1: //phone a friend
-                lifelineAns = dist(rng);
-                {
-                    lock_guard<recursive_mutex> lock(printMtx);
-                    cout << "\nI think the answer is " << q.ch[lifelineAns] << endl;
-                }
-                lifeline = true;
-                break;
-            case 2: // 50/50
-            {
-                vector<int> wrongAns;
-                for(int i = 0; i < 4; ++i){
-                    if ('a' + i != q.ans)
-                        wrongAns.push_back(i);
-                }
-                shuffle(wrongAns.begin(), wrongAns.end(), rng);
-                {
-                    lock_guard<recursive_mutex> lock(printMtx);
-                    cout << "\nRemaining choices: \n";
-                    cout << q.ch[q.ans - 'a'] << endl;
-                    cout << q.ch[wrongAns[0]] << endl;
-                }
-                lifeline = true;
-                break;
-            }
-            case 3: //ask the audience
-                lifelineAns = dist(rng);
-                {
-                    lock_guard<recursive_mutex> lock(printMtx);
-                    cout << "\nThe audience think the answer is: " << q.ch[lifelineAns] << endl;
-                }
-                lifeline = true;
-                break;
-            default:
-                {
-                    lock_guard<recursive_mutex> lock(printMtx);
-                    cout << "Invalid choice. Please choose from 1-3 only\n";
-                }
-                continue; //will go back to the menu for lifelines
-            }
-            continue; //goes back to the current question
+        cin >> answer; //answer will be marked wrong if entered after the time limit
+        
+        auto end = chrono::steady_clock::now();
+        auto timeElapsed = chrono::duration_cast<chrono::seconds>(end - start).count();
+        
+        if (timeElapsed > 30){
+            lock_guard<recursive_mutex> lock(printMtx);
+            cout << "\nInvalid answer. Time limit exceeded!\n";
+            return 'x'; //player's answer is automatically marked
         }
-        break;
+        
+        ch = answer[0];
+        if (ch == '0') {
+            if (!lifeline) {
+                int choice;
+                {
+                    lock_guard<recursive_mutex> lock(printMtx);
+                    cout << "\n-----Lifeline-----\n";
+                    cout << "1. Phone a friend\n";
+                    cout << "2. 50/50\n";
+                    cout << "3. Ask the Audience\n";
+                    cout << "What lifeline would you like to use? ";
+                    cin >> choice;
+                }
+        
+                // Use lifeline...
+                random_device randomA;
+                mt19937 rng(randomA());
+                uniform_int_distribution<int> dist(0, 3);
+                int lifelineAns;
+        
+                switch (choice) {
+                    case 1:
+                    {
+                        lifelineAns = dist(rng);
+                        lock_guard<recursive_mutex> lock(printMtx);
+                        cout << "\nI think the answer is " << q.ch[lifelineAns] << endl;
+                        break;
+                    }
+                    case 2:
+                    {
+                        vector<int> wrongAns;
+                        for (int i = 0; i < 4; ++i) {
+                            if ('a' + i != q.ans)
+                                wrongAns.push_back(i);
+                        }
+                        shuffle(wrongAns.begin(), wrongAns.end(), rng);
+                        lock_guard<recursive_mutex> lock(printMtx);
+                        cout << "\nRemaining choices:\n";
+                        cout << q.ch[q.ans - 'a'] << endl;
+                        cout << q.ch[wrongAns[0]] << endl;
+                        break;
+                    }
+                    case 3:
+                    {
+                        lifelineAns = dist(rng);
+                        lock_guard<recursive_mutex> lock(printMtx);
+                        cout << "\nThe audience think the answer is: " << q.ch[lifelineAns] << endl;
+                        break;
+                    }
+                    default:
+                    {
+                        lock_guard<recursive_mutex> lock(printMtx);
+                        cout << "Invalid choice. Please choose from 1–3 only\n";
+                    }
+                }
+        
+                lifeline = true;
+                continue;
+            } else {
+                cout << "You already used a lifeline." << endl;
+                continue;
+            }
+        } else {
+            break; // answer is valid, exit loop
+        }
     }
     return ch;
 }
+
 
 bool checkAns(int id, char ch) {
     char cor = questions[roundNo - 1].ans;
@@ -207,24 +177,23 @@ bool checkAns(int id, char ch) {
     }
 }
 
-void gameplay(int id, bool isAuto){
+void gameplay(int id){
     char ch;
     int plPoints = points[id-1];
     {
         lock_guard<recursive_mutex> lock(printMtx);
         cout<<"Player "<< id<<" Logging in.."<<endl;
     }
-    //login use countdown and print when player has logged in <------------------------- TODO
-    this_thread::sleep_for(chrono::seconds(1)); //temporary latch
-    //"All players logged in!"
-    for (int i = roundNo; i <= 3; ++i){
+    this_thread::sleep_for(chrono::seconds(1)); // login delay
+
+    login.count_down(); // signal that this player is done logging in
+    login.wait();       // wait for all players to log in
+
+    for (int i = 1; i <= 3; ++i){
         {
             lock_guard<recursive_mutex> lock(printMtx);
             cout<<"\n[ROUND "<<roundNo<<" -- Player "<<id<<"'s turn]"<<endl;
             ch = askQ(id);
-
-            //cout<<"Player "<<id<<" has chosen "<<ch<<"!"<<endl; print this in automated
-            
         }
         //async
         future<bool> res = async(launch::async, checkAns, id, ch);
@@ -258,7 +227,7 @@ string checkHighest(){
     return winners;
 }
 
-void start(int numPlayers, bool isAuto){
+void start(){
     //randomize questions
     random_device randomQ;
     mt19937 rng(randomQ());
@@ -266,15 +235,14 @@ void start(int numPlayers, bool isAuto){
     
     vector<thread> threads;
     for (int i = 0; i < 4; ++i) {
-        threads.emplace_back(gameplay, i+1, isAuto);
+        threads.emplace_back(gameplay, i+1);
     }
-
-    this_thread::sleep_for(chrono::seconds(1)); //temporary latch
-    
-    //cout<<"All players logged in!"; print when latch is goods <------------------- TODO
     
     for (auto& t : threads) t.join();
     
     cout<<"The Player(s) with the highest score is.. "<<checkHighest()<<"!"<<endl;
+    
+    cout<<"\nExiting..."<<endl;
+    cout<<"Group 4"<<endl;
 
 }
