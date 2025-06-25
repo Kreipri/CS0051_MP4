@@ -227,7 +227,7 @@ string checkHighest(){
 
     return winners;
 }
-
+    
 void start(){
     //randomize questions
     random_device randomQ;
