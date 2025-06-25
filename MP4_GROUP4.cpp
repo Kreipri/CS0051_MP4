@@ -96,7 +96,7 @@ int main()
     }
 }
 
-char askQ(int id){ //<------------------- TODO call lifeline, add automated version too either in this function or in a diff function or sa gameplay function
+char askQ(int id){ 
     Question q = questions[roundNo-1];
     char ch = ' ';
     string answer;
@@ -156,7 +156,7 @@ char askQ(int id){ //<------------------- TODO call lifeline, add automated vers
                 }
                 lifeline = true;
                 break;
-            case 2: //50/50
+            case 2: // 50/50
             {
                 vector<int> wrongAns;
                 for(int i = 0; i < 4; ++i){
